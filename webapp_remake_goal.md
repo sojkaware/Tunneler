@@ -22,6 +22,8 @@ Any edits I will ask you to do to spec files must be implemented as "minimum req
 
 Please avoid testing it yourself by interacting with the game in the browser and taking screenshots. I can test it well and give you detailed feedback. Just code what I want and I will test it.
 
+ALL settings or parameters MUST be in single place. Avoid having params scattered around the codebase.
+
 ## Pre-requisites
 First code isolated demos (each covering a particular aspect or behaviour of the game) so human coder can review them and approve them.
 Each demo must be standalone and independently runnable and made with the same technical stack as the final game.
