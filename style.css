@@ -1,0 +1,172 @@
+/* Tuneller Styles */
+
+:root {
+    --black: #000000;
+    --cannon-yellow: #f3eb1c;
+    --light-blue: #2c2cff;
+    --dark-blue: #0000b6;
+    --light-green: #00ff00;
+    --dark-green: #00aa00;
+    --panel-highlight: #727272;
+    --panel-solid: #656565;
+    --panel-shadow: #333333;
+    --shield-turquoise: #28f3f3;
+}
+
+@font-face {
+    font-family: 'VGA8x8';
+    /* Using a similar font if VGA 8x8 is not locally available, 
+       but for pixel perfect we rely on pixel alignment anyway. */
+    src: local('Courier New');
+    /* Placeholder */
+}
+
+body {
+    background-color: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+#game-container {
+    width: 160px;
+    height: 100px;
+    background-color: var(--dark-blue);
+    position: relative;
+    image-rendering: pixelated;
+    /* Scale up for visibility while maintaining pixel perfect look */
+    transform: scale(4);
+    transform-origin: center;
+}
+
+#main-screen {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* View Screens */
+.player-view {
+    position: absolute;
+    width: 76px;
+    height: 71px;
+    top: 2px;
+    background-color: var(--black);
+    /* Hollow space */
+}
+
+#view-left {
+    left: 2px;
+}
+
+#view-right {
+    left: 82px;
+    /* 2 + 76 + 4 */
+}
+
+canvas {
+    display: block;
+}
+
+/* Info Panels */
+.info-panel {
+    position: absolute;
+    width: 68px;
+    height: 25px;
+    top: 74px;
+    /* 2 + 71 (view) + 1 (spacing) */
+    background-color: var(--panel-solid);
+
+    /* 3D Effect Raised: 
+       Outer highlight: top edge 1px, left edge 2px, color panel_highlight.
+       Outer shadow: bottom edge 1px, right edge 2px, color panel_shadow.
+    */
+    border-top: 1px solid var(--panel-highlight);
+    border-left: 2px solid var(--panel-highlight);
+    border-bottom: 1px solid var(--panel-shadow);
+    border-right: 2px solid var(--panel-shadow);
+    box-sizing: border-box;
+}
+
+#panel-left {
+    left: 6px;
+}
+
+#panel-right {
+    left: 86px;
+}
+
+/* Label: WIDTH = 7, HEIGHT = 5.
+   User wants 2px highlight (border) + 2px base grey.
+   Since border-left is 2px, we set left to 2px to get the 2px gap.
+   Total from outer edge: 2 + 2 = 4px. */
+.label {
+    position: absolute;
+    width: 7px;
+    height: 5px;
+    left: 2px;
+    font-family: monospace;
+    font-size: 5px;
+    line-height: 5px;
+    text-align: center;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.energy .label {
+    top: 5px;
+    color: var(--cannon-yellow);
+}
+
+.shield .label {
+    top: 15px;
+    color: var(--shield-turquoise);
+}
+
+/* Bar Slot Container: WIDTH = 52, HEIGHT = 8. Margins: Vertical 3px from top, Horizontal 12px from left. */
+.bar-slot {
+    position: absolute;
+    width: 52px;
+    height: 8px;
+    left: 10px;
+    background-color: var(--panel-solid);
+
+    /* 3D Effect (Raised to match main container) */
+    border-top: 1px solid var(--panel-highlight);
+    border-left: 2px solid var(--panel-highlight);
+    border-bottom: 1px solid var(--panel-shadow);
+    border-right: 2px solid var(--panel-shadow);
+    box-sizing: border-box;
+}
+
+.energy .bar-slot {
+    top: 3px;
+}
+
+.shield .bar-slot {
+    top: 13px;
+}
+
+/* Active Bar Fill: WIDTH = 44, HEIGHT = 4. Perfectly centered within Bar Slot. */
+.bar-fill {
+    position: absolute;
+    width: 44px;
+    height: 4px;
+    top: 1px;
+    /* (8 - 4 - 2 borders) / 2 = 1px */
+    left: 2px;
+    /* (52 - 44 - 4 borders) / 2 = 2px */
+}
+
+.energy-fill {
+    background-color: var(--cannon-yellow);
+}
+
+.shield-fill {
+    background-color: var(--shield-turquoise);
+}

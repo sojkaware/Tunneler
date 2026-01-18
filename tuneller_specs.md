@@ -1,3 +1,13 @@
+# Conventions of the specs
+Outer Reference: All item dimensions (WIDTH/HEIGHT) include the 3D borders (the 3D effect is part of the item's total footprint).
+
+Absolute Offsets: All margins/paddings are measured from the absolute outermost edge of the container (pixel 0) to the absolute outermost edge of the child item.
+
+3D Orientation: 
+"Raised" = Top/Left Highlight, Bottom/Right Shadow.
+"Sunken" = Top/Left Shadow, Bottom/Right Highlight.
+
+
 # About The Game
 Tunneler is a two player, top-down perspective game written in the early 1990s by Geoffrey Silverton for DOS on IBM-PC compatible computers.
 The objective of the game is to be the first to win three rounds. A round continues until one tank blows up (from being shot or simply running out of energy).
@@ -97,9 +107,12 @@ WIDTH = 52
 HEIGHT = 8
 
 Margins relative to Info Panel Container:
-Vertical 3px from top inner edge.
-Horizontal 12px from left inner edge.
-Has 3D effect.
+Vertical 3px from top outer edge.
+Horizontal 12px from left outer edge.
+
+## 3D Effect (Raised)
+Outer highlight: top edge 1px, left edge 2px, color panel_highlight.
+Outer shadow: bottom edge 1px, right edge 2px, color panel_shadow.
 
 #### Active Bar Fill
 WIDTH = 44

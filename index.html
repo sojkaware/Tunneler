@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuneller Remake</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- Main Screen (160x100) -->
+        <div id="main-screen">
+            <!-- Left Player View (Blue) -->
+            <div id="view-left" class="player-view">
+                <canvas id="canvas-left" width="76" height="71"></canvas>
+            </div>
+
+            <!-- Right Player View (Green) -->
+            <div id="view-right" class="player-view">
+                <canvas id="canvas-right" width="76" height="71"></canvas>
+            </div>
+
+            <!-- Info Panel Left (Blue) -->
+            <div id="panel-left" class="info-panel">
+                <div class="status-row energy">
+                    <div class="label">E</div>
+                    <div class="bar-slot">
+                        <div class="bar-fill energy-fill" style="width: 44px;"></div>
+                    </div>
+                </div>
+                <div class="status-row shield">
+                    <div class="label">S</div>
+                    <div class="bar-slot">
+                        <div class="bar-fill shield-fill" style="width: 44px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel Right (Green) -->
+            <div id="panel-right" class="info-panel">
+                <div class="status-row energy">
+                    <div class="label">E</div>
+                    <div class="bar-slot">
+                        <div class="bar-fill energy-fill" style="width: 44px;"></div>
+                    </div>
+                </div>
+                <div class="status-row shield">
+                    <div class="label">S</div>
+                    <div class="bar-slot">
+                        <div class="bar-fill shield-fill" style="width: 44px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
