@@ -94,6 +94,7 @@ const CELLS = {
 
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
+    initSprites();
     initGame();
     // Event Listeners for Input
     window.addEventListener('keydown', (e) => { STATE.keys[e.code] = true; });
@@ -323,7 +324,7 @@ function placeEntities() {
 function drawBase(bx, by, color) {
     const w = CONFIG.WORLD.WIDTH;
     const baseSize = CONFIG.ENTITIES.BASE_SIZE;
-    const gap = CONFIG.ENTITIES.BASE_ENTRANCE_GAP;
+    const gap = 9; // Widened to 9px for 7px tank
     const side = (baseSize - gap) / 2;
 
     // Interior is empty (black/hollow)
@@ -333,21 +334,18 @@ function drawBase(bx, by, color) {
         }
     }
 
-    // Walls
-    const placeWall = (x, y) => { STATE.world[y * w + x] = CELLS.EMPTY; /* Base walls are actually empty space in original? No, specs say "Color equals tank body color" */ };
-    // Wait, original base is hollow inside (black). Walls are colored.
-    // I previously set them to EMPTY. Correcting:
-    // Actually, I'll use a special marker or just render them differently.
-    // For now, let's treat base walls as a special "indestructible" color type or just modify the world.
-    // Since world is a Uint8Array, let's add 4: BASE_BLUE, 5: BASE_GREEN.
     const blueVal = 10, greenVal = 11;
     const val = (color === CONFIG.COLORS.LIGHT_BLUE) ? blueVal : greenVal;
 
     // Top/Bottom walls with gaps
     for (let x = bx; x < bx + baseSize; x++) {
-        if (x < bx + side || x >= bx + side + gap) {
+        const isGap = (x >= Math.floor(bx + side) && x < Math.floor(bx + side + gap));
+        if (!isGap) {
             STATE.world[by * w + x] = val;
             STATE.world[(by + baseSize - 1) * w + x] = val;
+        } else {
+            STATE.world[by * w + x] = CELLS.EMPTY;
+            STATE.world[(by + baseSize - 1) * w + x] = CELLS.EMPTY;
         }
     }
     // Left/Right walls
@@ -410,8 +408,15 @@ function updateMovement() {
         if (STATE.keys[c.right]) dx += 1;
 
         if (dx !== 0 || dy !== 0) {
-            // Update Angle
-            c.player.angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            // Update Angle (North = 0)
+            if (dy === -1 && dx === 0) c.player.angle = 0;
+            else if (dy === -1 && dx === 1) c.player.angle = 45;
+            else if (dy === 0 && dx === 1) c.player.angle = 90;
+            else if (dy === 1 && dx === 1) c.player.angle = 135;
+            else if (dy === 1 && dx === 0) c.player.angle = 180;
+            else if (dy === 1 && dx === -1) c.player.angle = 225;
+            else if (dy === 0 && dx === -1) c.player.angle = 270;
+            else if (dy === -1 && dx === -1) c.player.angle = 315;
 
             // Speed logic: Check if digging or in tunnel
             const isDigging = checkIsDigging(c.player.x, c.player.y, dx, dy);
@@ -420,8 +425,8 @@ function updateMovement() {
             const nextX = c.player.x + dx * speed;
             const nextY = c.player.y + dy * speed;
 
-            // Collision with Rock
-            if (!checkRockCollision(nextX, nextY)) {
+            // Collision with Rock or Base
+            if (!checkObstacleCollision(nextX, nextY)) {
                 c.player.x = nextX;
                 c.player.y = nextY;
                 // Dig soil
@@ -431,25 +436,30 @@ function updateMovement() {
     });
 }
 
+function checkObstacleCollision(nx, ny) {
+    const w = CONFIG.WORLD.WIDTH;
+    const r = 2.5; // Slightly reduced core for better passage through tight 7-9px gaps
+    // Using Math.round to match the precise pixel position of the tank body
+    const cx = Math.round(nx);
+    const cy = Math.round(ny);
+
+    for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+            const tx = cx + dx;
+            const ty = cy + dy;
+            const cell = STATE.world[ty * w + tx];
+            if (cell === CELLS.ROCK || cell === 10 || cell === 11) return true;
+        }
+    }
+    return false;
+}
+
 function checkIsDigging(px, py, dx, dy) {
     const w = CONFIG.WORLD.WIDTH;
     const x = Math.floor(px + dx * (SPEEDS.TANK_SIZE / 2 + 1));
     const y = Math.floor(py + dy * (SPEEDS.TANK_SIZE / 2 + 1));
     const cell = STATE.world[y * w + x];
     return cell === CELLS.SOIL_A || cell === CELLS.SOIL_B;
-}
-
-function checkRockCollision(nx, ny) {
-    const w = CONFIG.WORLD.WIDTH;
-    const r = SPEEDS.TANK_SIZE / 2;
-    for (let dy = -r; dy <= r; dy++) {
-        for (let dx = -r; dx <= r; dx++) {
-            const tx = Math.floor(nx + dx);
-            const ty = Math.floor(ny + dy);
-            if (STATE.world[ty * w + tx] === CELLS.ROCK) return true;
-        }
-    }
-    return false;
 }
 
 function digSoil(px, py) {
@@ -491,7 +501,7 @@ function updateCombat() {
         b.x += b.dx * CONFIG.COMBAT.BULLET_SPEED;
         b.y += b.dy * CONFIG.COMBAT.BULLET_SPEED;
 
-        if (checkRockCollision(b.x, b.y) || checkTankHit(b)) {
+        if (checkObstacleCollision(b.x, b.y) || checkTankHit(b)) {
             spawnExplosion(b.x, b.y, CONFIG.COMBAT.BULLET_EXPLOSION);
             STATE.bullets.splice(i, 1);
         } else if (b.x < 0 || b.x >= CONFIG.WORLD.WIDTH || b.y < 0 || b.y >= CONFIG.WORLD.HEIGHT) {
@@ -501,7 +511,7 @@ function updateCombat() {
 }
 
 function fireBullet(p) {
-    const rad = p.angle * Math.PI / 180;
+    const rad = (p.angle - 90) * Math.PI / 180;
     STATE.bullets.push({
         x: p.x + Math.cos(rad) * 6,
         y: p.y + Math.sin(rad) * 6,
@@ -561,15 +571,65 @@ function updateExplosions() {
     }
 }
 
-const TANK_SPRITE = [
-    [0, 0, 0, 0, 0, 0, 0],
-    [0, 3, 3, 3, 3, 3, 3],
-    [0, 0, 1, 1, 1, 1, 0],
-    [2, 2, 2, 2, 1, 1, 0], // Pointer (cannon) on left/right
-    [0, 0, 1, 1, 1, 1, 0],
-    [0, 3, 3, 3, 3, 3, 3],
-    [0, 0, 0, 0, 0, 0, 0]
-];
+const TANK_SPRITES = {};
+
+function initSprites() {
+    const lateral = [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 3, 3, 3, 3, 3, 3],
+        [0, 0, 1, 1, 1, 1, 0],
+        [2, 2, 2, 2, 1, 1, 0],
+        [0, 0, 1, 1, 1, 1, 0],
+        [0, 3, 3, 3, 3, 3, 3],
+        [0, 0, 0, 0, 0, 0, 0]
+    ];
+
+    const diagonal = [
+        [0, 0, 0, 3, 0, 0, 0],
+        [0, 0, 3, 1, 0, 2, 0],
+        [0, 3, 1, 1, 2, 0, 0],
+        [3, 1, 1, 2, 1, 1, 3],
+        [0, 0, 1, 1, 1, 3, 0],
+        [0, 0, 0, 1, 3, 0, 0],
+        [0, 0, 0, 3, 0, 0, 0]
+    ];
+
+    function rotate(m) {
+        const n = m.length;
+        const res = Array.from({ length: n }, () => new Array(n));
+        for (let y = 0; y < n; y++) {
+            for (let x = 0; x < n; x++) {
+                res[x][n - 1 - y] = m[y][x];
+            }
+        }
+        return res;
+    }
+
+    function flipH(m) {
+        return m.map(row => [...row].reverse());
+    }
+
+    function flipV(m) {
+        return [...m].reverse();
+    }
+
+    // 270 (Left) is our template (lateral)
+    TANK_SPRITES[270] = lateral;
+    TANK_SPRITES[90] = flipH(lateral);
+
+    // 0 (Up) is lateral rotated CW
+    const up = rotate(lateral);
+    TANK_SPRITES[0] = up;
+    TANK_SPRITES[180] = flipV(up);
+
+    // Diagonal: 45 (Up-Right) is our template
+    TANK_SPRITES[45] = diagonal;
+    TANK_SPRITES[135] = flipV(diagonal);
+    TANK_SPRITES[225] = flipH(TANK_SPRITES[135]);
+    TANK_SPRITES[315] = flipH(diagonal);
+}
+
+// Sprites are initialized in the DOMContentLoaded listener above.
 
 function render() {
     const w = CONFIG.WORLD.WIDTH;
@@ -598,7 +658,7 @@ function render() {
         }
         ctx.putImageData(imageData, 0, 0);
 
-        // Render Entities on top
+        // Render Entities on top (using discrete pixel drawing)
         renderBullets(ctx, p);
         renderParticles(ctx, p);
         renderTanks(ctx, p);
@@ -615,23 +675,21 @@ function getCellColor(cell) {
     if (cell === CELLS.SOIL_B) return CONFIG.COLORS.DARK_ORANGE;
     if (cell === CELLS.ROCK) return CONFIG.COLORS.ROCK_GRAY;
     if (cell === CELLS.EMPTY) return CONFIG.COLORS.BLACK;
-    if (cell === 10) return CONFIG.COLORS.LIGHT_BLUE;
-    if (cell === 11) return CONFIG.COLORS.LIGHT_GREEN;
+    if (cell === 10) return CONFIG.COLORS.LIGHT_BLUE; // Base walls
+    if (cell === 11) return CONFIG.COLORS.LIGHT_GREEN; // Base walls
     return CONFIG.COLORS.BLACK;
 }
 
 function renderTanks(ctx, viewOwner) {
     STATE.players.forEach(p => {
-        const relX = p.x - viewOwner.viewX;
-        const relY = p.y - viewOwner.viewY;
+        const relX = Math.round(p.x - viewOwner.viewX);
+        const relY = Math.round(p.y - viewOwner.viewY);
 
         if (relX > -5 && relX < CONFIG.VIEW.WIDTH + 5 && relY > -5 && relY < CONFIG.VIEW.HEIGHT + 5) {
-            ctx.save();
-            ctx.translate(relX, relY);
-            ctx.rotate(p.angle * Math.PI / 180);
+            // Get sprite for current angle
+            const sprite = TANK_SPRITES[p.angle] || TANK_SPRITES[0];
 
-            // Draw Tank Pixels
-            TANK_SPRITE.forEach((row, sy) => {
+            sprite.forEach((row, sy) => {
                 row.forEach((val, sx) => {
                     if (val === 0) return;
                     let color;
@@ -639,10 +697,9 @@ function renderTanks(ctx, viewOwner) {
                     else if (val === 2) color = CONFIG.COLORS.CANNON_YELLOW;
                     else if (val === 3) color = CONFIG.COLORS.PANEL_SHADOW; // Wheels
                     ctx.fillStyle = color;
-                    ctx.fillRect(sx - 3, sy - 3, 1, 1);
+                    ctx.fillRect(relX + sx - 3, relY + sy - 3, 1, 1);
                 });
             });
-            ctx.restore();
         }
     });
 }

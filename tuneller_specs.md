@@ -124,7 +124,7 @@ Perfectly centered within Bar Slot Container.
 
 Hardcoded sprites as numpy arrays.
 
-Left pressed (270 degrees):
+Left pressed (270 degrees, cannon points left and tank is firing bullets to the left):
 [[0 0 0 0 0 0 0],
  [0 3 3 3 3 3 3],
  [0 0 1 1 1 1 0],
@@ -133,7 +133,7 @@ Left pressed (270 degrees):
  [0 3 3 3 3 3 3],
  [0 0 0 0 0 0 0]]
 
-Up + Right pressed together (45 degrees):
+Up + Right pressed together (45 degrees, cannon points to top right corner):
 [[0 0 0 3 0 0 0],
  [0 0 3 1 0 2 0],
  [0 3 1 1 2 0 0],
@@ -151,6 +151,7 @@ North = 0 degrees reference.
 
 
 # Base
+Base wall is obstacle. Tank or fire can't pass through it, same as Rock.
 Square base, side length 35px, wall thickness 1px.
 Two entrances located north and south.
 Each entrance is a centered gap 7px wide (14 + 7 + 14).
