@@ -8,7 +8,7 @@ const CONFIG = {
     WORLD: {
         WIDTH: 1024,
         HEIGHT: 512,
-        FPS: 30, // Conventional low FPS feel
+        FPS: 20, // Conventional low FPS feel
     },
     VIEW: {
         WIDTH: 76,
@@ -92,6 +92,7 @@ const CELLS = {
     EMPTY: 3
 };
 
+let lastTime = 0;
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
     initSprites();
@@ -384,13 +385,19 @@ Object.assign(STATE, {
     frameCounter: 0
 });
 
-function gameLoop() {
-    STATE.frameCounter++;
-    updateMovement();
-    updateCombat();
-    updateExplosions();
-    updateViewPositions();
-    render();
+function gameLoop(time) {
+    const delta = time - lastTime;
+    const interval = 1000 / CONFIG.WORLD.FPS;
+
+    if (delta >= interval) {
+        lastTime = time - (delta % interval);
+        STATE.frameCounter++;
+        updateMovement();
+        updateCombat();
+        updateExplosions();
+        updateViewPositions();
+        render();
+    }
     requestAnimationFrame(gameLoop);
 }
 
@@ -429,8 +436,8 @@ function updateMovement() {
             if (!checkObstacleCollision(nextX, nextY)) {
                 c.player.x = nextX;
                 c.player.y = nextY;
-                // Dig soil
-                digSoil(c.player.x, c.player.y);
+                // Dig soil (smoothed, 1px in front)
+                digSoil(c.player.x, c.player.y, dx, dy);
             }
         }
     });
@@ -438,15 +445,16 @@ function updateMovement() {
 
 function checkObstacleCollision(nx, ny) {
     const w = CONFIG.WORLD.WIDTH;
-    const r = 2.5; // Slightly reduced core for better passage through tight 7-9px gaps
-    // Using Math.round to match the precise pixel position of the tank body
+    const r = 3; // Strict 7x7 for tank body and cannon tip
     const cx = Math.round(nx);
     const cy = Math.round(ny);
 
-    for (let dy = -2; dy <= 2; dy++) {
-        for (let dx = -2; dx <= 2; dx++) {
+    for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
             const tx = cx + dx;
             const ty = cy + dy;
+            // Boundary check
+            if (tx < 0 || tx >= CONFIG.WORLD.WIDTH || ty < 0 || ty >= CONFIG.WORLD.HEIGHT) return true;
             const cell = STATE.world[ty * w + tx];
             if (cell === CELLS.ROCK || cell === 10 || cell === 11) return true;
         }
@@ -462,16 +470,33 @@ function checkIsDigging(px, py, dx, dy) {
     return cell === CELLS.SOIL_A || cell === CELLS.SOIL_B;
 }
 
-function digSoil(px, py) {
+function digSoil(px, py, dx, dy) {
     const w = CONFIG.WORLD.WIDTH;
-    const r = SPEEDS.TANK_SIZE / 2 + 1; // Dig 1px around tank
-    for (let dy = -r; dy <= r; dy++) {
-        for (let dx = -r; dx <= r; dx++) {
-            const tx = Math.floor(px + dx);
-            const ty = Math.floor(py + dy);
-            const cell = STATE.world[ty * w + tx];
-            if (cell === CELLS.SOIL_A || cell === CELLS.SOIL_B) {
-                STATE.world[ty * w + tx] = CELLS.EMPTY;
+    const cx = Math.round(px + dx); // Dig 1px in front
+    const cy = Math.round(py + dy);
+
+    // Smoothed square mask (7x7 with corners removed)
+    const MASK = [
+        [0, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+        [1, 1, 1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 1, 1, 0]
+    ];
+
+    for (let dym = -3; dym <= 3; dym++) {
+        for (let dxm = -3; dxm <= 3; dxm++) {
+            if (MASK[dym + 3][dxm + 3]) {
+                const tx = cx + dxm;
+                const ty = cy + dym;
+                if (tx >= 0 && tx < CONFIG.WORLD.WIDTH && ty >= 0 && ty < CONFIG.WORLD.HEIGHT) {
+                    const cell = STATE.world[ty * w + tx];
+                    if (cell === CELLS.SOIL_A || cell === CELLS.SOIL_B) {
+                        STATE.world[ty * w + tx] = CELLS.EMPTY;
+                    }
+                }
             }
         }
     }
