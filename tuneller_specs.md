@@ -177,7 +177,7 @@ Color: rock_gray
 WIDTH = 1024
 HEIGHT = 512
 
-Inner part is playable area (playground) separated from the outer part by a border. The inner (playable soil) part is a single large squareish connected "cave" spanning horizontally across the map, with rare grey rocks forming walls and obstacles.
+Inner part is playable area (playground) separated from the outer part by a border. The inner (playable soil) part is a single large squareish connected "cave" enclosed by a rock border on all sides, with rare grey rocks forming walls and obstacles.
 
 ## Outer part (outside the playground)
 Made of rock (100%)
@@ -186,7 +186,7 @@ Made of rock (100%)
 Made of soil with rare and rather small "islands" or "clusters" inside the central soil area.
 
 Border described from a birds eye from distance:
-The boundary is not a smooth line; its highly jagged, resembles "acid erosion". The rock "bites" down into the soil mass in irregular, varying short-long, thin, vertical "fingers" or "stalactites", very uneven, comb-like appearance. Sometimes frantic, zig-zag pattern. There are "bays" of rock pushed deep into the soil and "peninsulas" of soil stretching out into the rock. 
+The boundary is not a smooth line; its highly jagged, resembles "acid erosion". The rock "bites" into the soil mass from all four edges in irregular, varying short-long, thin "fingers" or "stalactites" pointing inward, creating a very uneven, comb-like appearance. Sometimes frantic, zig-zag pattern. There are "bays" of rock pushed deep into the soil and "peninsulas" of soil stretching out into the rock. 
 
 From close view (Player's View Screen), the rocky islands and border seem smooth and not particularly rough.
 

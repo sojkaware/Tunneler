@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuneller - World Gen Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="demo-container">
+        <h1>World Generation Demo</h1>
+        <div id="main-layout">
+            <div id="sidebar">
+                <div class="control-group">
+                    <label>Border Jaggedness: <span id="val-border-jagged">64</span></label>
+                    <input type="range" id="border-jagged" min="0" max="100" value="64">
+                </div>
+                <div class="control-group">
+                    <label>Finger Start Thick: <span id="val-finger-thick">14</span></label>
+                    <input type="range" id="finger-thick" min="1" max="50" value="14">
+                </div>
+                <div class="control-group">
+                    <label>Finger Tapering: <span id="val-finger-taper">100</span></label>
+                    <input type="range" id="finger-taper" min="0" max="100" value="100">
+                </div>
+                <div class="control-group">
+                    <label>Border Density: <span id="val-border-density">95</span></label>
+                    <input type="range" id="border-density" min="1" max="100" value="95">
+                </div>
+                <div class="control-group">
+                    <label>Border Max Depth: <span id="val-border-depth">142</span></label>
+                    <input type="range" id="border-depth" min="10" max="400" value="142">
+                </div>
+                <div class="control-group">
+                    <label>Island Seeding: <span id="val-island-seed">7</span></label>
+                    <input type="range" id="island-seed" min="0" max="100" value="7">
+                </div>
+                <div class="control-group">
+                    <label>Island Scale: <span id="val-island-scale">45</span></label>
+                    <input type="range" id="island-scale" min="1" max="200" value="45">
+                </div>
+                <div class="control-group">
+                    <label>Island Clumping (CA): <span id="val-island-ca">5</span></label>
+                    <input type="range" id="island-ca" min="0" max="20" value="5">
+                </div>
+                <div class="control-group">
+                    <label>Min Rock Size (Smoothing): <span id="val-rock-min-size">4</span></label>
+                    <input type="range" id="rock-min-size" min="0" max="20" value="4">
+                </div>
+                <button id="generate-btn">Generate New World</button>
+                <div class="toggle-group">
+                    <label for="zoom-toggle">Zoom:</label>
+                    <select id="zoom-toggle">
+                        <option value="full">Full World (1024x512)</option>
+                        <option value="view">View Screen (76x71)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="canvas-container">
+                <canvas id="world-canvas"></canvas>
+            </div>
+        </div>
+        <div id="info">
+            <p>Click and drag on the canvas in "View Screen" mode to pan.</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
