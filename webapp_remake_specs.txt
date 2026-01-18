@@ -1,5 +1,0 @@
-# Goal For The AI
-Code a pixel-perfect remake of the original Tuneller game.
-
-## Technical requirements
-The game must be runnable from a statically hosted site, for example from Github pages.

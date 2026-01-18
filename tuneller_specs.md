@@ -58,6 +58,10 @@ Padding 2px from top and sides of Main Screen.
 Horizontal composition:
 2px background + 76px left view + 4px background + 76px right view + 2px background.
 
+## Low Energy Interfrence Visual Feedback
+The lower the Player's energy, the more likely it is and the longer the interference effect covers the entire player's View Screen.
+Loosing vision / visual dropouts effect's purpose is to make it harder to see the game and motivate the player to refuel at the base.
+
 
 # Info Panel Container
 WIDTH = 68
