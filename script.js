@@ -732,16 +732,27 @@ function updateCombat() {
         }
     });
 
-    // Move Bullets
+    // Move Bullets Iteratively (1px at a time to prevent tunneling)
     for (let i = STATE.bullets.length - 1; i >= 0; i--) {
         const b = STATE.bullets[i];
-        b.x += b.dx * CONFIG.COMBAT.BULLET_SPEED;
-        b.y += b.dy * CONFIG.COMBAT.BULLET_SPEED;
+        let collided = false;
 
-        if (checkBulletCollision(b.x, b.y) || checkTankHit(b)) {
-            spawnExplosion(b.x, b.y, CONFIG.COMBAT.BULLET_EXPLOSION);
-            STATE.bullets.splice(i, 1);
-        } else if (b.x < 0 || b.x >= CONFIG.WORLD.WIDTH || b.y < 0 || b.y >= CONFIG.WORLD.HEIGHT) {
+        for (let step = 0; step < CONFIG.COMBAT.BULLET_SPEED; step++) {
+            const nextX = b.x + b.dx;
+            const nextY = b.y + b.dy;
+
+            if (checkBulletCollision(nextX, nextY) || checkTankHit({ x: nextX, y: nextY, owner: b.owner })) {
+                // Spawn explosion at the CURRENT (last safe) position to stay on "soil side"
+                spawnExplosion(b.x, b.y, CONFIG.COMBAT.BULLET_EXPLOSION);
+                STATE.bullets.splice(i, 1);
+                collided = true;
+                break;
+            }
+            b.x = nextX;
+            b.y = nextY;
+        }
+
+        if (!collided && (b.x < 0 || b.x >= CONFIG.WORLD.WIDTH || b.y < 0 || b.y >= CONFIG.WORLD.HEIGHT)) {
             STATE.bullets.splice(i, 1);
         }
     }
@@ -749,6 +760,7 @@ function updateCombat() {
 
 function destroyTank(p) {
     if (STATE.isRoundEnding) return;
+    p.energy = 0; // Explicitly zero out energy
     STATE.isRoundEnding = true;
     STATE.roundEndTimer = 60; // Wait 3 seconds at 20fps for explosion/screen
     p.isDestroyed = true;
@@ -794,10 +806,18 @@ function checkBulletCollision(bx, by) {
 function fireBullet(p) {
     const rad = (p.angle - 90) * Math.PI / 180;
     // Spawn at cannon tip (approx 4px from center for 7x7 sprite)
-    // Use Math.floor on the base coordinates to match pixels
+    const sx = Math.floor(p.x) + Math.cos(rad) * 4;
+    const sy = Math.floor(p.y) + Math.sin(rad) * 4;
+
+    // Check if cannon tip is already inside a wall
+    if (checkBulletCollision(sx, sy)) {
+        spawnExplosion(sx, sy, CONFIG.COMBAT.BULLET_EXPLOSION);
+        return;
+    }
+
     STATE.bullets.push({
-        x: Math.floor(p.x) + Math.cos(rad) * 4,
-        y: Math.floor(p.y) + Math.sin(rad) * 4,
+        x: sx,
+        y: sy,
         dx: Math.cos(rad),
         dy: Math.sin(rad),
         owner: p.id
@@ -820,11 +840,27 @@ function checkTankHit(b) {
 }
 
 function spawnExplosion(x, y, cfg) {
+    const w = CONFIG.WORLD.WIDTH;
+    const h = CONFIG.WORLD.HEIGHT;
+
     for (let i = 0; i < cfg.N; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = 0.5 + Math.random() * 1.5;
+        const dist = Math.random() * cfg.R;
+        const speed = Math.random() * 0.8 + 0.2;
+        const px = x + Math.cos(angle) * dist;
+        const py = y + Math.sin(angle) * dist;
+
+        // Don't spawn particles inside solid walls/rocks
+        const tx = Math.floor(px);
+        const ty = Math.floor(py);
+        if (tx >= 0 && tx < w && ty >= 0 && ty < h) {
+            const cell = STATE.world[ty * w + tx];
+            if (cell === CELLS.ROCK || cell === 10 || cell === 11) continue;
+        }
+
         STATE.particles.push({
-            x, y,
+            x: px,
+            y: py,
             dx: Math.cos(angle) * speed,
             dy: Math.sin(angle) * speed,
             life: Math.floor(Math.random() * cfg.LIFE) + 1,
@@ -845,11 +881,13 @@ function updateExplosions() {
         }
         p.life--;
 
-        // Remove soil where particle is
+        // Shrapnel collision check (Stop on rock/walls)
         const tx = Math.floor(p.x), ty = Math.floor(p.y);
         if (tx >= 0 && tx < CONFIG.WORLD.WIDTH && ty >= 0 && ty < CONFIG.WORLD.HEIGHT) {
             const cell = STATE.world[ty * w + tx];
-            if (cell === CELLS.SOIL_A || cell === CELLS.SOIL_B) {
+            if (cell === CELLS.ROCK || cell === 10 || cell === 11) {
+                STATE.particles.splice(i, 1);
+            } else if (cell === CELLS.SOIL_A || cell === CELLS.SOIL_B) {
                 STATE.world[ty * w + tx] = CELLS.EMPTY;
             }
         }
