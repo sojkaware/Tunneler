@@ -76,6 +76,10 @@ const CONFIG = {
         TANK_EXPLOSION: { N: 60, R: 10, LIFE: 26 },
         BULLET_EXPLOSION: { N: 12, R: 1, LIFE: 2 },
         FIRE_FRAME_MULTIPLIER: 2
+    },
+    UI: {
+        TEXT_SIZE: 1, // Base multiplier for bitmap font (pixels per font-pixel)
+        RAINBOW_COLORS: ['#ff0000', '#ffa500', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#ee82ee']
     }
 };
 
@@ -132,6 +136,77 @@ const CELLS = {
 };
 
 let lastTime = 0;
+
+/**
+ * BITMAP FONT - IBM PC BIOS 8x8 Look
+ * Each character is a 64-bit mask (stored as hexadecimal strings of 8 bytes)
+ * 1: ON, 0: OFF
+ */
+const BIT_FONT = {
+    '0': ['3c', '66', '6e', '76', '66', '66', '3c', '00'],
+    '1': ['18', '38', '18', '18', '18', '18', '7e', '00'],
+    '2': ['3c', '66', '06', '0c', '18', '30', '7e', '00'],
+    '3': ['3c', '66', '06', '1c', '06', '66', '3c', '00'],
+    '4': ['1c', '3c', '6c', '6c', 'fe', '0c', '1e', '00'],
+    '5': ['7e', '60', '7c', '06', '06', '66', '3c', '00'],
+    '6': ['1c', '30', '60', '7c', '66', '66', '3c', '00'],
+    '7': ['7e', '06', '0c', '18', '30', '30', '30', '00'],
+    '8': ['3c', '66', '66', '3c', '66', '66', '3c', '00'],
+    '9': ['3c', '66', '66', '3e', '06', '0c', '38', '00'],
+    'A': ['3c', '66', '66', '7e', '66', '66', '66', '00'],
+    'B': ['7c', '66', '66', '7c', '66', '66', '7c', '00'],
+    'C': ['3c', '66', '60', '60', '60', '66', '3c', '00'],
+    'D': ['78', '6c', '66', '66', '66', '6c', '78', '00'],
+    'E': ['7e', '60', '60', '78', '60', '60', '7e', '00'],
+    'F': ['7e', '60', '60', '78', '60', '60', '60', '00'],
+    'G': ['3c', '66', '60', '6e', '66', '66', '3c', '00'],
+    'H': ['66', '66', '66', '7e', '66', '66', '66', '00'],
+    'I': ['3c', '18', '18', '18', '18', '18', '3c', '00'],
+    'J': ['1e', '0c', '0c', '0c', '0c', '6c', '38', '00'],
+    'K': ['66', '6c', '78', '70', '78', '6c', '66', '00'],
+    'L': ['60', '60', '60', '60', '60', '60', '7e', '00'],
+    'M': ['63', '77', '7f', '6b', '63', '63', '63', '00'],
+    'N': ['66', '76', '7e', '7e', '6e', '66', '66', '00'],
+    'O': ['3c', '66', '66', '66', '66', '66', '3c', '00'],
+    'P': ['7c', '66', '66', '7c', '60', '60', '60', '00'],
+    'Q': ['3c', '66', '66', '66', '6e', '3c', '0e', '00'],
+    'R': ['7c', '66', '66', '7c', '78', '6c', '66', '00'],
+    'S': ['3c', '66', '30', '1c', '06', '66', '3c', '00'],
+    'T': ['7e', '18', '18', '18', '18', '18', '18', '00'],
+    'U': ['66', '66', '66', '66', '66', '66', '3c', '00'],
+    'V': ['66', '66', '66', '66', '66', '3c', '18', '00'],
+    'W': ['63', '63', '63', '6b', '7f', '77', '63', '00'],
+    'X': ['66', '66', '3c', '18', '3c', '66', '66', '00'],
+    'Y': ['66', '66', '66', '3c', '18', '18', '18', '00'],
+    'Z': ['7e', '06', '0c', '18', '30', '60', '7e', '00'],
+    ' ': ['00', '00', '00', '00', '00', '00', '00', '00'],
+    '-': ['00', '00', '00', '3e', '00', '00', '00', '00'],
+    '!': ['18', '18', '18', '18', '00', '00', '18', '00'],
+    ':': ['00', '18', '18', '00', '18', '18', '00', '00'],
+};
+
+function drawBitmapText(ctx, text, x, y, color, scale = 1) {
+    const charW = 8 * scale;
+    const charH = 8 * scale;
+
+    ctx.fillStyle = color;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i].toUpperCase();
+        const bitmap = BIT_FONT[char] || BIT_FONT[' '];
+
+        bitmap.forEach((hex, rowIdx) => {
+            const byte = parseInt(hex, 16);
+            for (let bit = 7; bit >= 0; bit--) {
+                if ((byte >> bit) & 1) {
+                    const px = x + i * charW + (7 - bit) * scale;
+                    const py = y + rowIdx * scale;
+                    ctx.fillRect(px, py, scale, scale);
+                }
+            }
+        });
+    }
+}
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
     initSprites();
@@ -1078,6 +1153,7 @@ function renderRoundScreenFull() {
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
     const vw = 160, vh = 100;
+    const scale = CONFIG.UI.TEXT_SIZE;
 
     // Ensure crisp rendering
     ctx.imageSmoothingEnabled = false;
@@ -1087,37 +1163,35 @@ function renderRoundScreenFull() {
     ctx.fillRect(0, 0, vw, vh);
 
     // 1px Pink box - Small, framed around ROUND X
-    const boxW = 80, boxH = 16;
+    const boxW = 64 * scale, boxH = 12 * scale;
     const bx = Math.floor((vw - boxW) / 2), by = 25;
     ctx.strokeStyle = '#ff00ff';
     ctx.lineWidth = 1;
     ctx.strokeRect(bx, by, boxW, boxH);
 
-    // Text: ROUND X (Rainbow jitter)
-    ctx.font = '12px monospace';
-    ctx.textBaseline = 'top';
-    ctx.textAlign = 'center';
+    // Text: ROUND X (Rainbow, stable colors)
     const text = `ROUND ${STATE.round}`;
-    const rainbow = ['#ff0000', '#ffa500', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#ee82ee'];
+    const charW = 8 * scale;
+    const startX = Math.floor((vw - text.length * charW) / 2);
+    const ty = Math.floor(by + (boxH - 8 * scale) / 2);
 
-    const charW = 10;
     for (let i = 0; i < text.length; i++) {
-        ctx.fillStyle = rainbow[Math.floor(Math.random() * rainbow.length)];
-        // Use integer coordinates for crispness
-        const tx = Math.floor(vw / 2 - (text.length * charW / 2) + i * charW + charW / 2);
-        const ty = Math.floor(by + 2);
-        ctx.fillText(text[i], tx, ty);
+        // Use consistent color from palette based on index and round to avoid flickering
+        const colorIdx = (i + STATE.round) % CONFIG.UI.RAINBOW_COLORS.length;
+        const color = CONFIG.UI.RAINBOW_COLORS[colorIdx];
+        drawBitmapText(ctx, text[i], startX + i * charW, ty, color, scale);
     }
 
-    // Scores - Moved further down to avoid overlap
+    // Scores
     const scoreY = 55;
-    ctx.fillStyle = CONFIG.COLORS.LIGHT_BLUE;
-    ctx.fillText('BLUE', Math.floor(vw / 2 - 25), scoreY);
-    ctx.fillText(STATE.players[0].score, Math.floor(vw / 2 - 25), scoreY + 12);
+    const leftX = Math.floor(vw / 4 - (4 * charW) / 2); // Center "BLUE" in left half
+    const rightX = Math.floor(3 * vw / 4 - (5 * charW) / 2); // Center "GREEN" in right half
 
-    ctx.fillStyle = CONFIG.COLORS.LIGHT_GREEN;
-    ctx.fillText('GREEN', Math.floor(vw / 2 + 25), scoreY);
-    ctx.fillText(STATE.players[1].score, Math.floor(vw / 2 + 25), scoreY + 12);
+    drawBitmapText(ctx, 'BLUE', leftX, scoreY, CONFIG.COLORS.LIGHT_BLUE, scale);
+    drawBitmapText(ctx, STATE.players[0].score.toString(), leftX + (4 * charW - charW) / 2, scoreY + 10 * scale, CONFIG.COLORS.LIGHT_BLUE, scale);
+
+    drawBitmapText(ctx, 'GREEN', rightX, scoreY, CONFIG.COLORS.LIGHT_GREEN, scale);
+    drawBitmapText(ctx, STATE.players[1].score.toString(), rightX + (5 * charW - charW) / 2, scoreY + 10 * scale, CONFIG.COLORS.LIGHT_GREEN, scale);
 }
 
 function renderGameOver() {
@@ -1126,34 +1200,33 @@ function renderGameOver() {
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
     const vw = 160, vh = 100;
+    const scale = CONFIG.UI.TEXT_SIZE;
+    const charW = 8 * scale;
 
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, vw, vh);
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.font = '12px monospace';
 
     // Winner Text
     const blueScore = STATE.players[0].score;
     const greenScore = STATE.players[1].score;
     const winner = blueScore > greenScore ? 'BLUE' : 'GREEN';
     const winnerColor = blueScore > greenScore ? CONFIG.COLORS.LIGHT_BLUE : CONFIG.COLORS.LIGHT_GREEN;
+    const winText = `${winner} WINS!`;
 
-    ctx.fillStyle = winnerColor;
-    ctx.fillText(`${winner} WINS!`, Math.floor(vw / 2), 15);
+    drawBitmapText(ctx, winText, Math.floor((vw - winText.length * charW) / 2), 15, winnerColor, scale);
 
     // Prompt
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('F1 - PLAY AGAIN', Math.floor(vw / 2), 40);
-    ctx.fillText('ESC - QUIT', Math.floor(vw / 2), 55);
+    const prompt1 = 'F1 - PLAY AGAIN';
+    const prompt2 = 'ESC - QUIT';
+    drawBitmapText(ctx, prompt1, Math.floor((vw - prompt1.length * charW) / 2), 40, '#ffffff', scale);
+    drawBitmapText(ctx, prompt2, Math.floor((vw - prompt2.length * charW) / 2), 52, '#ffffff', scale);
 
     // Final Scores
-    ctx.fillStyle = CONFIG.COLORS.LIGHT_BLUE;
-    ctx.fillText(`BLUE: ${blueScore}`, Math.floor(vw / 2 - 35), 75);
-    ctx.fillStyle = CONFIG.COLORS.LIGHT_GREEN;
-    ctx.fillText(`GREEN: ${greenScore}`, Math.floor(vw / 2 + 35), 75);
+    const bText = `BLUE: ${blueScore}`;
+    const gText = `GREEN: ${greenScore}`;
+    drawBitmapText(ctx, bText, Math.floor(vw / 2 - bText.length * charW - 5), 75, CONFIG.COLORS.LIGHT_BLUE, scale);
+    drawBitmapText(ctx, gText, Math.floor(vw / 2 + 5), 75, CONFIG.COLORS.LIGHT_GREEN, scale);
 }
 
 
