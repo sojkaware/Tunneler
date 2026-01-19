@@ -166,9 +166,9 @@ Tank movement digs soil 1px around the tank.
 
 
 # Tank Explosion
-N_SHRAPNELS = 30
-CORE_RADIUS = 1 × tank width
-N_MAX_LIFESPAN = 12
+N_SHRAPNELS = 60
+CORE_RADIUS = 10
+N_MAX_LIFESPAN = 26
 
 
 # Bullet
@@ -177,9 +177,9 @@ Constant cadence visualized as 2px bullet followed by 2px gap.
 
 
 # Bullet Impact Explosion
-N_SHRAPNELS = 4
+N_SHRAPNELS = 12
 CORE_RADIUS = single pixel (closest to impact point)
-N_MAX_LIFESPAN = 3
+N_MAX_LIFESPAN = 2
 
 
 # Rock
@@ -224,7 +224,11 @@ If any overlap of the base and rock occurs, the placement algorithm must run aga
 When the tank moves, the environment should move around the tank while the tank's sprite should not move or wiggle. No jitter.
 
 ## General Explosion
+Explosion animation is slowed down relative to the game loop.
+FIRE_FRAME_MULTIPLIER = 2
+
 Particle effect defined by CORE_RADIUS, N_SHRAPNELS, N_MAX_LIFESPAN.
+Shrapnel position (x, y) is updated only every FIRE_FRAME_MULTIPLIER frames, while its lifespan decreases every frame.
 
 ### Shrapnels
 Size is globally constant at 1px.

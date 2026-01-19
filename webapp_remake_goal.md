@@ -4,6 +4,7 @@ To code a pixel-perfect remake of the original Tuneller game.
 ## Technical requirements
 The game must be runnable from a statically hosted site, for example from Github pages.
 
+## Non-Gameplay Screens In The Remake
 The UI or menu is not descibed but you can examine the `round.png` image to get an idea of the look.
 I think its this font: IBM PC BIOS 8x8 Font, Code Page 437 (CP437)(CGA and EGA adapters) "VGA 8x8" or "DOS Font".
 
@@ -15,7 +16,7 @@ Colors: `ROUND`: rainbow, each lettter different random color per display. `BLUE
 
 After 3 rounds, the game is over. Show who won and the play again screen prompt (any key to play again). Do not start the new game if player not responds.
 
-## Important Rules
+## Important Rules For AI
 Never edit my spec files without my approval.
 I must explicitly ask you for doing edits to spec files.
 Any edits I will ask you to do to spec files must be implemented as "minimum required changes" to accomplish the request.
