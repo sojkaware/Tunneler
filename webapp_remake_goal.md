@@ -9,18 +9,18 @@ I think its this font: IBM PC BIOS 8x8 Font, Code Page 437 (CP437)(CGA and EGA a
 
 Initially, there should be no extra screen, just jump straight into the game.
 
-After one of the tanks is destroyed, the game should show black screen with `ROUND X` in a pink box in the middle of the screen.
-Below from left to right, it should be `BLUE` and `GREEN`. Below these it should be a number representing score for each player.
-Colors: `ROUND`: rainbow, each lettter different random color. `BLUE` and `GREEN`: their respective colors.
+After one of the tanks is destroyed, the game should show black screen with `ROUND X` in a 1px thin pink rectangle in the middle of the screen.
+Below from left to right, it should be `BLUE` and `GREEN` (no boxes, just text). Below these it should be a number representing score for each player.
+Colors: `ROUND`: rainbow, each lettter different random color per display. `BLUE` and `GREEN`: their respective colors. Do not go to next round if player not responds by any key press.
 
-After the game is over, show play again screen (F1 to play again, ESC to quit).
+After the game is over, show who won and the play again screen prompt (F1 to play again, ESC to quit). Do not start the new game if player not responds.
 
 ## Important Rules
 Never edit my spec files without my approval.
 I must explicitly ask you for doing edits to spec files.
 Any edits I will ask you to do to spec files must be implemented as "minimum required changes" to accomplish the request.
 
-Please avoid testing it yourself by interacting with the game in the browser and taking screenshots. I can test it well and give you detailed feedback. Just code what I want and I will test it.
+NEVER test the game interactively by launching browser and taking screenshots. I can test it well and give you detailed feedback. Just code what I want and I will test it.
 
 ALL settings or parameters MUST be in single place. Avoid having params scattered around the codebase.
 

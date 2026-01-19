@@ -209,16 +209,19 @@ The rock/soil game world is likely generated using a cellular automaton (CA) alg
 The algorithm probably relies on random seeding followed by iterative smoothing. It starts with a filled grid and evolves it based on local rules, similar to Conway's Game of Life but tuned for cave-like structures.
 
 ## Entities Placement
-
-Blue base and its tank: left
-Green base and its tank: right
-The positions of bases are random but must satisfy minimum distance of 1/6 world width.
+The positions of bases are random within their respective halves of the world and must satisfy minimum distance of 1/6 world width.
 Tank is always in the center of the base.
-
+Blue base and its tank must ALWAYS occupy left half of the world.
+Green base and its tank must ALWAYS occupy right half of the world.
+The placement algorithm should be run once at the beginning of the very game but not after each round - the game map from the previous round must be preserved so players can continue exploring the same world.
+If any overlap of the base and rock occurs, the placement algorithm must run again until no collision occurs.
 
 
 
 # Mechanics
+
+## View Updating
+When the tank moves, the environment should move around the tank while the tank's sprite should not move or wiggle. No jitter.
 
 ## General Explosion
 Particle effect defined by CORE_RADIUS, N_SHRAPNELS, N_MAX_LIFESPAN.

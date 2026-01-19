@@ -170,3 +170,16 @@ canvas {
 .shield-fill {
     background-color: var(--shield-turquoise);
 }
+
+/* Overlay Canvas */
+#overlay-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 160px;
+    height: 100px;
+    z-index: 100;
+    display: none;
+    /* Controlled by JS */
+    image-rendering: pixelated;
+}
