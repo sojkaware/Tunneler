@@ -13,7 +13,7 @@ After one of the tanks is destroyed, the game should show black screen with `ROU
 Below from left to right, it should be `BLUE` and `GREEN` (no boxes, just text). Below these it should be a number representing score for each player.
 Colors: `ROUND`: rainbow, each lettter different random color per display. `BLUE` and `GREEN`: their respective colors. Do not go to next round if player not responds by any key press.
 
-After the game is over, show who won and the play again screen prompt (F1 to play again, ESC to quit). Do not start the new game if player not responds.
+After 3 rounds, the game is over. Show who won and the play again screen prompt (any key to play again). Do not start the new game if player not responds.
 
 ## Important Rules
 Never edit my spec files without my approval.

@@ -9,6 +9,7 @@ const CONFIG = {
         WIDTH: 512,//1024,
         HEIGHT: 256,//512,
         FPS: 20, // Conventional low FPS feel
+        SCORE_LIMIT: 3,
     },
     VIEW: {
         WIDTH: 76,
@@ -779,12 +780,12 @@ function updateRoundFlow() {
 
         STATE.roundEndTimer--;
         if (STATE.roundEndTimer <= 0) {
-            // Check for Game Over (Limit 10)
+            // Check for Game Over
             const p1 = STATE.players[0];
             const p2 = STATE.players[1];
-            if (p1.score >= 10 || p2.score >= 10) {
+            if (p1.score >= CONFIG.WORLD.SCORE_LIMIT || p2.score >= CONFIG.WORLD.SCORE_LIMIT) {
                 STATE.isGameOver = true;
-                STATE.winner = p1.score >= 10 ? p1 : p2;
+                STATE.winner = p1.score >= CONFIG.WORLD.SCORE_LIMIT ? p1 : p2;
                 return;
             }
 
