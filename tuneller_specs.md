@@ -162,7 +162,7 @@ Color equals tank body color.
 Colors: light_orange and dark_orange, random with equal probability.
 
 ## Soil Digging by Tank Movement
-Tank movement digs soil 1px around the tank.
+Tank movement digs soil 1px around the tank, but not in a perfect square - the digging pattern has not sharp edges but rather smooth - the two pixels on the edges are not part of it.
 
 
 # Tank Explosion

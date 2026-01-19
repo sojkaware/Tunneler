@@ -79,7 +79,8 @@ const CONFIG = {
     },
     UI: {
         TEXT_SIZE: 1, // Base multiplier for bitmap font (pixels per font-pixel)
-        RAINBOW_COLORS: ['#ff0000', '#ffa500', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#ee82ee']
+        RAINBOW_COLORS: ['#ff0000', '#ffa500', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#ee82ee'],
+        OVERLAY_MIN_TIME: 3000 // ms
     }
 };
 
@@ -124,7 +125,8 @@ const STATE = {
     winner: null,
     bullets: [],
     particles: [],
-    frameCounter: 0
+    frameCounter: 0,
+    overlayStartTime: 0
 };
 
 // CELL TYPES
@@ -183,6 +185,8 @@ const BIT_FONT = {
     '-': ['00', '00', '00', '3e', '00', '00', '00', '00'],
     '!': ['18', '18', '18', '18', '00', '00', '18', '00'],
     ':': ['00', '18', '18', '00', '18', '18', '00', '00'],
+    '.': ['00', '00', '00', '00', '00', '00', '18', '00'],
+    ',': ['00', '00', '00', '00', '00', '00', '18', '18'],
 };
 
 function drawBitmapText(ctx, text, x, y, color, scale = 1) {
@@ -223,22 +227,24 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleGlobalInput(code) {
+    const now = Date.now();
+    const canContinue = (now - STATE.overlayStartTime >= CONFIG.UI.OVERLAY_MIN_TIME);
+
     if (STATE.isGameOver) {
-        if (code === 'F1') {
+        if (canContinue) {
+            // "Press any key to play again"
             resetEntireGame();
-        } else if (code === 'Escape') {
-            window.close();
-            STATE.isGameOver = false;
-            STATE.isPaused = true;
         }
     } else if (STATE.isRoundEnding && STATE.waitingForInput) {
-        // Any key to continue round
-        STATE.isRoundEnding = false;
-        STATE.waitingForInput = false;
-        STATE.round++;
-        initRound();
-        const overlay = document.getElementById('overlay-canvas');
-        if (overlay) overlay.style.display = 'none';
+        if (canContinue) {
+            // Any key to continue round
+            STATE.isRoundEnding = false;
+            STATE.waitingForInput = false;
+            STATE.round++;
+            initRound();
+            const overlay = document.getElementById('overlay-canvas');
+            if (overlay) overlay.style.display = 'none';
+        }
     }
 }
 
@@ -861,10 +867,12 @@ function updateRoundFlow() {
             if (p1.score >= CONFIG.WORLD.SCORE_LIMIT || p2.score >= CONFIG.WORLD.SCORE_LIMIT) {
                 STATE.isGameOver = true;
                 STATE.winner = p1.score >= CONFIG.WORLD.SCORE_LIMIT ? p1 : p2;
+                STATE.overlayStartTime = Date.now(); // Record start time for Game Over screen
                 return;
             }
 
             STATE.waitingForInput = true;
+            STATE.overlayStartTime = Date.now(); // Record start time for Round screen
         }
     }
 }
@@ -1176,9 +1184,8 @@ function renderRoundScreenFull() {
     const ty = Math.floor(by + (boxH - 8 * scale) / 2);
 
     for (let i = 0; i < text.length; i++) {
-        // Use consistent color from palette based on index and round to avoid flickering
-        const colorIdx = (i + STATE.round) % CONFIG.UI.RAINBOW_COLORS.length;
-        const color = CONFIG.UI.RAINBOW_COLORS[colorIdx];
+        // Flickering effect: Random color from palette per frame
+        const color = CONFIG.UI.RAINBOW_COLORS[Math.floor(Math.random() * CONFIG.UI.RAINBOW_COLORS.length)];
         drawBitmapText(ctx, text[i], startX + i * charW, ty, color, scale);
     }
 
@@ -1217,10 +1224,8 @@ function renderGameOver() {
     drawBitmapText(ctx, winText, Math.floor((vw - winText.length * charW) / 2), 15, winnerColor, scale);
 
     // Prompt
-    const prompt1 = 'F1 - PLAY AGAIN';
-    const prompt2 = 'ESC - QUIT';
-    drawBitmapText(ctx, prompt1, Math.floor((vw - prompt1.length * charW) / 2), 40, '#ffffff', scale);
-    drawBitmapText(ctx, prompt2, Math.floor((vw - prompt2.length * charW) / 2), 52, '#ffffff', scale);
+    const prompt = 'PRESS ANY KEY TO PLAY AGAIN';
+    drawBitmapText(ctx, prompt, Math.floor((vw - prompt.length * charW) / 2), 40, '#ffffff', scale);
 
     // Final Scores
     const bText = `BLUE: ${blueScore}`;
