@@ -231,6 +231,7 @@ Size is globally constant at 1px.
 Color is bullet_red.
 Each shrapnel is assigned random angle (0–360), random initial position within CORE_RADIUS, and random lifespan at creation.
 Each shrapnel exists at most N_MAX_LIFESPAN frames; random lifespan must guarantee this maximum.
+Shrapnel movement is not physics-based, it moves radially outward at constant speed for fixed amount of steps, then disspears.
 
 Action order:
 Shrapnels spawn in core → move radially outward → disappear → soil is removed where shrapnel was present.

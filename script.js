@@ -8,7 +8,7 @@ const CONFIG = {
     WORLD: {
         WIDTH: 512,//1024,
         HEIGHT: 256,//512,
-        FPS: 15, // Conventional low FPS feel
+        FPS: 20, // Conventional low FPS feel
     },
     VIEW: {
         WIDTH: 76,
@@ -72,8 +72,9 @@ const CONFIG = {
         BULLET_SPEED: 2,
         FIRE_ENERGY_COST: 5,
         INFLOW_RATE_MAX: 1.0, // Proportional to energy
-        TANK_EXPLOSION: { N: 40, R: 20, LIFE: 26, FRICTION: 0.8 },
-        BULLET_EXPLOSION: { N: 12, R: 1, LIFE: 2, FRICTION: 0.95 }
+        TANK_EXPLOSION: { N: 60, R: 10, LIFE: 26 },
+        BULLET_EXPLOSION: { N: 12, R: 1, LIFE: 2 },
+        FIRE_FRAME_MULTIPLIER: 2
     }
 };
 
@@ -827,20 +828,21 @@ function spawnExplosion(x, y, cfg) {
             dx: Math.cos(angle) * speed,
             dy: Math.sin(angle) * speed,
             life: Math.floor(Math.random() * cfg.LIFE) + 1,
-            maxLife: cfg.LIFE,
-            friction: cfg.FRICTION || 1.0
+            maxLife: cfg.LIFE
         });
     }
 }
 
 function updateExplosions() {
     const w = CONFIG.WORLD.WIDTH;
+    const isUpdateFrame = (STATE.frameCounter % CONFIG.COMBAT.FIRE_FRAME_MULTIPLIER === 0);
+
     for (let i = STATE.particles.length - 1; i >= 0; i--) {
         const p = STATE.particles[i];
-        p.x += p.dx;
-        p.y += p.dy;
-        p.dx *= p.friction;
-        p.dy *= p.friction;
+        if (isUpdateFrame) {
+            p.x += p.dx;
+            p.y += p.dy;
+        }
         p.life--;
 
         // Remove soil where particle is
@@ -1038,37 +1040,45 @@ function renderRoundScreenFull() {
     const ctx = canvas.getContext('2d');
     const vw = 160, vh = 100;
 
+    // Ensure crisp rendering
+    ctx.imageSmoothingEnabled = false;
+
     // Solid black
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, vw, vh);
 
-    // 1px Pink box
-    const boxW = 80, boxH = 40;
-    const bx = (vw - boxW) / 2, by = (vh - boxH) / 2;
+    // 1px Pink box - Small, framed around ROUND X
+    const boxW = 80, boxH = 16;
+    const bx = Math.floor((vw - boxW) / 2), by = 25;
     ctx.strokeStyle = '#ff00ff';
     ctx.lineWidth = 1;
     ctx.strokeRect(bx, by, boxW, boxH);
 
     // Text: ROUND X (Rainbow jitter)
-    ctx.font = '8px monospace';
+    ctx.font = '12px monospace';
     ctx.textBaseline = 'top';
     ctx.textAlign = 'center';
     const text = `ROUND ${STATE.round}`;
     const rainbow = ['#ff0000', '#ffa500', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#ee82ee'];
 
+    const charW = 10;
     for (let i = 0; i < text.length; i++) {
         ctx.fillStyle = rainbow[Math.floor(Math.random() * rainbow.length)];
-        ctx.fillText(text[i], vw / 2 - (text.length * 4) + i * 8 + 4, by + 8);
+        // Use integer coordinates for crispness
+        const tx = Math.floor(vw / 2 - (text.length * charW / 2) + i * charW + charW / 2);
+        const ty = Math.floor(by + 2);
+        ctx.fillText(text[i], tx, ty);
     }
 
-    // Scores
+    // Scores - Moved further down to avoid overlap
+    const scoreY = 55;
     ctx.fillStyle = CONFIG.COLORS.LIGHT_BLUE;
-    ctx.fillText('BLUE', vw / 2 - 20, by + 22);
-    ctx.fillText(STATE.players[0].score, vw / 2 - 20, by + 30);
+    ctx.fillText('BLUE', Math.floor(vw / 2 - 25), scoreY);
+    ctx.fillText(STATE.players[0].score, Math.floor(vw / 2 - 25), scoreY + 12);
 
     ctx.fillStyle = CONFIG.COLORS.LIGHT_GREEN;
-    ctx.fillText('GREEN', vw / 2 + 20, by + 22);
-    ctx.fillText(STATE.players[1].score, vw / 2 + 20, by + 30);
+    ctx.fillText('GREEN', Math.floor(vw / 2 + 25), scoreY);
+    ctx.fillText(STATE.players[1].score, Math.floor(vw / 2 + 25), scoreY + 12);
 }
 
 function renderGameOver() {
@@ -1078,12 +1088,13 @@ function renderGameOver() {
     const ctx = canvas.getContext('2d');
     const vw = 160, vh = 100;
 
+    ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, vw, vh);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.font = '8px monospace';
+    ctx.font = '12px monospace';
 
     // Winner Text
     const blueScore = STATE.players[0].score;
@@ -1092,18 +1103,18 @@ function renderGameOver() {
     const winnerColor = blueScore > greenScore ? CONFIG.COLORS.LIGHT_BLUE : CONFIG.COLORS.LIGHT_GREEN;
 
     ctx.fillStyle = winnerColor;
-    ctx.fillText(`${winner} WINS THE GAME!`, vw / 2, vh / 2 - 20);
+    ctx.fillText(`${winner} WINS!`, Math.floor(vw / 2), 15);
 
     // Prompt
     ctx.fillStyle = '#ffffff';
-    ctx.fillText('F1 - PLAY AGAIN', vw / 2, vh / 2);
-    ctx.fillText('ESC - QUIT', vw / 2, vh / 2 + 10);
+    ctx.fillText('F1 - PLAY AGAIN', Math.floor(vw / 2), 40);
+    ctx.fillText('ESC - QUIT', Math.floor(vw / 2), 55);
 
     // Final Scores
     ctx.fillStyle = CONFIG.COLORS.LIGHT_BLUE;
-    ctx.fillText(`BLUE: ${blueScore}`, vw / 2 - 25, vh / 2 + 25);
+    ctx.fillText(`BLUE: ${blueScore}`, Math.floor(vw / 2 - 35), 75);
     ctx.fillStyle = CONFIG.COLORS.LIGHT_GREEN;
-    ctx.fillText(`GREEN: ${greenScore}`, vw / 2 + 25, vh / 2 + 25);
+    ctx.fillText(`GREEN: ${greenScore}`, Math.floor(vw / 2 + 35), 75);
 }
 
 
