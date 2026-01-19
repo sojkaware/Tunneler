@@ -37,8 +37,8 @@ body {
     background-color: var(--dark-blue);
     position: relative;
     image-rendering: pixelated;
-    /* Scale up for visibility while maintaining pixel perfect look */
-    transform: scale(4);
+    /* Dynamic scaling: driving by JavaScript updateGameScale() */
+    transform: scale(var(--game-scale, 4));
     transform-origin: center;
 }
 

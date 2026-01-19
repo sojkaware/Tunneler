@@ -211,17 +211,26 @@ function drawBitmapText(ctx, text, x, y, color, scale = 1) {
         });
     }
 }
+
+function updateGameScale() {
+    const scale = Math.min(window.innerWidth / 160, window.innerHeight / 100);
+    document.documentElement.style.setProperty('--game-scale', scale);
+}
 document.addEventListener('DOMContentLoaded', () => {
     initUI();
     initSprites();
     initNoiseROM();
     setupGame();
+    updateGameScale();
+
     // Event Listeners for Input
     window.addEventListener('keydown', (e) => {
         STATE.keys[e.code] = true;
         handleGlobalInput(e.code);
     });
     window.addEventListener('keyup', (e) => { STATE.keys[e.code] = false; });
+
+    window.addEventListener('resize', updateGameScale);
 
     requestAnimationFrame(gameLoop);
 });
