@@ -23,7 +23,7 @@ Each player has a view screen and an instrument panel with two meters. The view 
 
 
 # Controls (BLUE player: - GREEN player)
-Movement (up, down, left right): WSAD keys - arrow keys
+Movement (up, down, left right): WXAD keys - arrow keys
 Fire: left <CTRL> - <ENTER>
 Hold two direction keys at once to move diagonally.
 
