@@ -30,7 +30,8 @@ After approx 4 hours of fiddling I had a working game, added 'end round' and 'ga
 
 ### Known Issues
 - The tip of the barrel and the wheels on the edges wrongly overlap with the base.
-- Speeds, damage amount and firing rate are not yet tuned to match closely the original.
+- Speeds, damage amount and firing rate decline are not yet tuned to match closely the original.
+- Tank's collision detection is not pixel perfect yet.
 
 
 ## Starting Point Assets

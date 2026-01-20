@@ -240,7 +240,7 @@ Action order:
 Shrapnels spawn in core → move radially outward → disappear → soil is removed where shrapnel was present.
 
 Interaction with other materials:
-Pixels of solid objects (tank body, base, rock) cannot be turned into fire pixels.
+Pixels of solid objects (tank body, base, rock) cannot be turned into fire pixels, except for the tip of the barrel (tail pixel).
 Transition order: Hollow/Soil → Fire → Hollow space (black).
 
 
@@ -261,6 +261,7 @@ Lower energy means reservoir depletes while maintaining constant outflow.
 When reservoir is empty, bullets stop immediately even if fire key is held.
 No bullets fire again until reservoir is fully refilled.
 Once full, flushing resumes at the same constant cadence but stops early due to low energy.
+There is some minimum "safe level", say 1/10 of inflow overriding the energy level to allow the player to fire reasonably even if almost exploding.
 
 Fire key behavior:
 Pressed once: single bullet
@@ -272,4 +273,4 @@ When about to explode, it dissapears so the explosion particle effect can be ful
 Collisions - pixel perfect:
 It should be able to stuck the wall of the base in between the barrel and wheels so the player must move the tank backward to free it.
 It should be possible to move exactly next to the wall of the base and peel off the soil exactly next to the wall (no gap).
-Other tank is an obstacle, it can't move through it.
+Other tank is an obstacle, it can't move through it. Two tanks cannot overlap (7x7 pixels square collision box).

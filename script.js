@@ -8,7 +8,7 @@ const CONFIG = {
     WORLD: {
         WIDTH: 512,//1024,
         HEIGHT: 256,//512,
-        FPS: 20, // Conventional low FPS feel
+        FPS: 18, // Conventional low FPS feel
         SCORE_LIMIT: 3,
     },
     VIEW: {
@@ -18,7 +18,7 @@ const CONFIG = {
     COLORS: {
         BLACK: '#000000',
         DARK_BLUE: '#0000b6',
-        CANNON_YELLOW: '#f3eb1c',
+        BARREL_YELLOW: '#f3eb1c',
         SHIELD_TURQUOISE: '#28f3f3',
         PANEL_HIGHLIGHT: '#727272',
         PANEL_SOLID: '#656565',
@@ -72,8 +72,8 @@ const CONFIG = {
         BULLET_CADENCE: 2, // Every 2 frames
         BULLET_SPEED: 2,
         FIRE_ENERGY_COST: 5,
-        INFLOW_RATE_MAX: 1.0, // Proportional to energy
-        TANK_EXPLOSION: { N: 60, R: 10, LIFE: 26 },
+        INFLOW_RATE_MAX: 0.25, // Proportional to energy. 0.25 * 10 = 2.5 per frame. 5 per 2 frames. Matches discharge.
+        TANK_EXPLOSION: { N: 70, R: 12, LIFE: 30 },
         BULLET_EXPLOSION: { N: 12, R: 1, LIFE: 2 },
         FIRE_FRAME_MULTIPLIER: 2
     },
@@ -99,6 +99,7 @@ const STATE = {
             color: CONFIG.COLORS.LIGHT_BLUE,
             wheelColor: CONFIG.COLORS.DARK_BLUE,
             dropout: { inBurst: false, burstRemaining: 0, stutterRemaining: 0, cachedFrame: null },
+            isRefilling: false,
             isDestroyed: false
         },
         {
@@ -112,6 +113,7 @@ const STATE = {
             color: CONFIG.COLORS.LIGHT_GREEN,
             wheelColor: CONFIG.COLORS.DARK_GREEN,
             dropout: { inBurst: false, burstRemaining: 0, stutterRemaining: 0, cachedFrame: null },
+            isRefilling: false,
             isDestroyed: false
         }
     ],
@@ -310,7 +312,7 @@ function initUI() {
         ctx.putImageData(imgData, 0, 0);
     }
 
-    document.querySelectorAll('.energy .label').forEach((el) => drawLabel(el, fontE, CONFIG.COLORS.CANNON_YELLOW));
+    document.querySelectorAll('.energy .label').forEach((el) => drawLabel(el, fontE, CONFIG.COLORS.BARREL_YELLOW));
     document.querySelectorAll('.shield .label').forEach((el) => drawLabel(el, fontS, CONFIG.COLORS.SHIELD_TURQUOISE));
 }
 
@@ -406,6 +408,7 @@ function initRound() {
         p.shield = CONFIG.PHYSICS.SHIELD_MAX;
         p.fireReservoir = 100;
         p.dropout = { inBurst: false, burstRemaining: 0, stutterRemaining: 0, cachedFrame: null };
+        p.isRefilling = false;
         p.isDestroyed = false;
     });
 
@@ -678,8 +681,8 @@ function updateMovement() {
             const nextX = c.player.x + moveX * speed;
             const nextY = c.player.y + moveY * speed;
 
-            // Collision with Rock or Base
-            if (!checkObstacleCollision(nextX, nextY)) {
+            // Collision with Rock or Base or Other Tank
+            if (!checkObstacleCollision(nextX, nextY, c.player.id)) {
                 c.player.x = nextX;
                 c.player.y = nextY;
                 // Energy Drain
@@ -744,12 +747,13 @@ function updateSignalLoss(p) {
     }
 }
 
-function checkObstacleCollision(nx, ny) {
+function checkObstacleCollision(nx, ny, ignoreId) {
     const w = CONFIG.WORLD.WIDTH;
-    const r = 3; // Strict 7x7 for tank body and cannon tip
+    const r = 3; // Strict 7x7 for tank body and barrel tip
     const cx = Math.round(nx);
     const cy = Math.round(ny);
 
+    // 1. Check World Map (Rocks & Bases)
     for (let dy = -r; dy <= r; dy++) {
         for (let dx = -r; dx <= r; dx++) {
             const tx = cx + dx;
@@ -760,6 +764,28 @@ function checkObstacleCollision(nx, ny) {
             if (cell === CELLS.ROCK || cell === 10 || cell === 11) return true;
         }
     }
+
+    // 2. Check Other Tanks
+    for (let p of STATE.players) {
+        if (p.id === ignoreId) continue;
+        if (p.isDestroyed) continue;
+
+        const otherCx = Math.round(p.x);
+        const otherCy = Math.round(p.y);
+
+        // Axis-Aligned Bounding Box (AABB) collision
+        // Rect 1: x in [cx-3, cx+3], y in [cy-3, cy+3]
+        // Rect 2: x in [otherCx-3, otherCx+3], y in [otherCy-3, otherCy+3]
+
+        // Overlap condition: (min1 <= max2) && (min2 <= max1)
+        const noOverlapX = (cx + 3 < otherCx - 3) || (otherCx + 3 < cx - 3);
+        const noOverlapY = (cy + 3 < otherCy - 3) || (otherCy + 3 < cy - 3);
+
+        if (!noOverlapX && !noOverlapY) {
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -805,24 +831,6 @@ function digSoil(px, py, dx, dy) {
 }
 
 function updateCombat() {
-    const fireKeys = ['ShiftLeft', 'ShiftRight'];
-
-    STATE.players.forEach((p, i) => {
-        const inflow = (p.energy / CONFIG.PHYSICS.ENERGY_MAX) * CONFIG.COMBAT.INFLOW_RATE_MAX * 10;
-        p.fireReservoir = Math.min(100, (p.fireReservoir || 100) + inflow);
-
-        if (STATE.keys[fireKeys[i]] && p.energy > 0 && p.fireReservoir >= CONFIG.COMBAT.FIRE_ENERGY_COST && STATE.frameCounter % CONFIG.COMBAT.BULLET_CADENCE === 0) {
-            p.fireReservoir -= CONFIG.COMBAT.FIRE_ENERGY_COST;
-            p.energy = Math.max(0, p.energy - 0.5); // Shooting costs energy
-            fireBullet(p);
-        }
-
-        // Destruction by zero energy
-        if (p.energy <= 0 && !STATE.isRoundEnding) {
-            destroyTank(p);
-        }
-    });
-
     // Move Bullets Iteratively (1px at a time to prevent tunneling)
     for (let i = STATE.bullets.length - 1; i >= 0; i--) {
         const b = STATE.bullets[i];
@@ -847,6 +855,33 @@ function updateCombat() {
             STATE.bullets.splice(i, 1);
         }
     }
+
+    const fireKeys = ['ShiftLeft', 'ShiftRight'];
+
+    STATE.players.forEach((p, i) => {
+        // Inflow with minimum safe level (30% of max energy equivalent)
+        const effectiveEnergy = Math.max(p.energy, CONFIG.PHYSICS.ENERGY_MAX * 0.3);
+        const inflow = (effectiveEnergy / CONFIG.PHYSICS.ENERGY_MAX) * CONFIG.COMBAT.INFLOW_RATE_MAX * 10;
+        p.fireReservoir = Math.min(100, (p.fireReservoir || 100) + inflow);
+
+        // Hysteresis Loop
+        if (p.fireReservoir <= CONFIG.COMBAT.FIRE_ENERGY_COST) {
+            p.isRefilling = true;
+        } else if (p.fireReservoir >= 100) {
+            p.isRefilling = false;
+        }
+
+        if (STATE.keys[fireKeys[i]] && !p.isRefilling && p.energy > 0 && p.fireReservoir >= CONFIG.COMBAT.FIRE_ENERGY_COST && STATE.frameCounter % CONFIG.COMBAT.BULLET_CADENCE === 0) {
+            p.fireReservoir -= CONFIG.COMBAT.FIRE_ENERGY_COST;
+            p.energy = Math.max(0, p.energy - 0.5); // Shooting costs energy
+            fireBullet(p);
+        }
+
+        // Destruction by zero energy
+        if (p.energy <= 0 && !STATE.isRoundEnding) {
+            destroyTank(p);
+        }
+    });
 }
 
 function destroyTank(p) {
@@ -896,23 +931,54 @@ function checkBulletCollision(bx, by) {
     return cell === CELLS.ROCK || cell === 10 || cell === 11 || cell === CELLS.SOIL_A || cell === CELLS.SOIL_B;
 }
 
-function fireBullet(p) {
-    const rad = (p.angle - 90) * Math.PI / 180;
-    // Spawn at cannon tip (approx 4px from center for 7x7 sprite)
-    const sx = Math.floor(p.x) + Math.cos(rad) * 4;
-    const sy = Math.floor(p.y) + Math.sin(rad) * 4;
+const BARREL_OFFSETS = {
+    0: { x: 3, y: 0 },
+    45: { x: 5, y: 1 },
+    90: { x: 6, y: 3 },
+    135: { x: 5, y: 5 },
+    180: { x: 3, y: 6 },
+    225: { x: 1, y: 5 },
+    270: { x: 0, y: 3 },
+    315: { x: 1, y: 1 }
+};
 
-    // Check if cannon tip is already inside a wall
-    if (checkBulletCollision(sx, sy)) {
-        spawnExplosion(sx, sy, CONFIG.COMBAT.BULLET_EXPLOSION);
+function fireBullet(p) {
+    const angle = p.angle;
+    const rad = (angle - 90) * Math.PI / 180;
+
+    // Direction vector (integer based for pixel perfection)
+    let dx = 0, dy = 0;
+    if (angle === 0) { dy = -1; }
+    else if (angle === 45) { dx = 1; dy = -1; }
+    else if (angle === 90) { dx = 1; }
+    else if (angle === 135) { dx = 1; dy = 1; }
+    else if (angle === 180) { dy = 1; }
+    else if (angle === 225) { dx = -1; dy = 1; }
+    else if (angle === 270) { dx = -1; }
+    else if (angle === 315) { dx = -1; dy = -1; }
+
+    const offset = BARREL_OFFSETS[angle];
+    // Tip World Position = TankTopLeft + Offset
+    // TankTopLeft = Math.floor(p.x) - 3 (Since p.x is center of 7x7)
+    const tipX = Math.floor(p.x) - 3 + offset.x;
+    const tipY = Math.floor(p.y) - 3 + offset.y;
+
+    // Bullet Leading Pixel = Tip + Direction
+    // This ensures the Tail (Leading - Direction) is exactly at Tip
+    const leadX = tipX + dx;
+    const leadY = tipY + dy;
+
+    // Check collision for the leading pixel
+    if (checkBulletCollision(leadX, leadY)) {
+        spawnExplosion(leadX, leadY, CONFIG.COMBAT.BULLET_EXPLOSION);
         return;
     }
 
     STATE.bullets.push({
-        x: sx,
-        y: sy,
-        dx: Math.cos(rad),
-        dy: Math.sin(rad),
+        x: leadX,
+        y: leadY,
+        dx: dx, // Use integer dx/dy
+        dy: dy,
         owner: p.id
     });
 }
@@ -1090,9 +1156,9 @@ function render() {
 
             // Render Entities on top (if not in dropout)
             if (!p.dropout.inBurst) {
+                renderTanks(ctx, p);
                 renderBullets(ctx, p);
                 renderParticles(ctx, p);
-                renderTanks(ctx, p);
             }
 
             // Update HUD
@@ -1129,7 +1195,7 @@ function renderTanks(ctx, viewOwner) {
                     if (val === 0) return;
                     let color;
                     if (val === 1) color = p.color;
-                    else if (val === 2) color = CONFIG.COLORS.CANNON_YELLOW;
+                    else if (val === 2) color = CONFIG.COLORS.BARREL_YELLOW;
                     else if (val === 3) color = p.wheelColor; // Use player-specific wheel color
                     ctx.fillStyle = color;
                     // Draw pixels relative to the calculated top-left of the tank
