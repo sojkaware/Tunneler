@@ -12,7 +12,7 @@ Absolute Offsets: All margins/paddings are measured from the absolute outermost 
 Tunneler is a two player, top-down perspective game written in the early 1990s by Geoffrey Silverton for DOS on IBM-PC compatible computers.
 The objective of the game is to be the first to win three rounds. A round continues until one tank blows up (from being shot or simply running out of energy).
 
-Players can move in one of 8 directions. Movement in tunnels is three times as fast as normal digging. Fast digging can be accomplished by firing the tank's cannon while moving. Various actions use up different amounts of energy: moving costs some energy, digging costs more, and shooting costs the most. Shields are damaged when hit by the other player's cannon. Players can refuel at either base but can repair their shields only at their own bases.
+Players can move in one of 8 directions. Movement in tunnels is three times as fast as normal digging. Fast digging can be accomplished by firing the tank's barrel while moving. Various actions use up different amounts of energy: moving costs some energy, digging costs more, and shooting costs the most. Shields are damaged when hit by the other player's barrel. Players can refuel at either base but can repair their shields only at their own bases.
 
 # Hands-on Experience
 Low-resolution pixelated DOS look.
@@ -30,7 +30,7 @@ Hold two direction keys at once to move diagonally.
 # Colors
 black = hollow space (digged soil)
 
-cannon_yellow = #f3eb1c
+barrel_yellow = #f3eb1c
 
 light_blue = #2c2cff
 dark_blue = #0000b6
@@ -96,7 +96,7 @@ Bar Slot Container contains an Active Bar Fill indicating the metric.
 WIDTH = 7
 HEIGHT = 5
 Content: single letter ("E" for Energy, "S" for Shield).
-Color: Energy = cannon_yellow, Shield = shield_turquoise.
+Color: Energy = barrel_yellow, Shield = shield_turquoise.
 
 Margins relative to Info Panel Container:
 Vertical 5px from top inner edge.
@@ -121,10 +121,9 @@ Perfectly centered within Bar Slot Container.
 
 
 # Tanks
-
 Hardcoded sprites as numpy arrays.
 
-Left pressed (270 degrees, cannon points left and tank is firing bullets to the left):
+Left pressed (270 degrees, barrel points left and tank is firing bullets to the left):
 [[0 0 0 0 0 0 0],
  [0 3 3 3 3 3 3],
  [0 0 1 1 1 1 0],
@@ -133,7 +132,7 @@ Left pressed (270 degrees, cannon points left and tank is firing bullets to the 
  [0 3 3 3 3 3 3],
  [0 0 0 0 0 0 0]]
 
-Up + Right pressed together (45 degrees, cannon points to top right corner):
+Up + Right pressed together (45 degrees, barrel points to top right corner):
 [[0 0 0 3 0 0 0],
  [0 0 3 1 0 2 0],
  [0 3 1 1 2 0 0],
@@ -144,7 +143,7 @@ Up + Right pressed together (45 degrees, cannon points to top right corner):
 
 Legend:
 3 = wheels (dark)
-2 = cannon (yellow)
+2 = barrel (yellow)
 1 = body (light)
 0 = transparent
 North = 0 degrees reference.
@@ -230,29 +229,29 @@ FIRE_FRAME_MULTIPLIER = 2
 Particle effect defined by CORE_RADIUS, N_SHRAPNELS, N_MAX_LIFESPAN.
 Shrapnel position (x, y) is updated only every FIRE_FRAME_MULTIPLIER frames, while its lifespan decreases every frame.
 
-### Shrapnels
+### Shrapnels (or Fire)
 Size is globally constant at 1px.
 Color is bullet_red.
 Each shrapnel is assigned random angle (0–360), random initial position within CORE_RADIUS, and random lifespan at creation.
 Each shrapnel exists at most N_MAX_LIFESPAN frames; random lifespan must guarantee this maximum.
-Shrapnel movement is not physics-based, it moves radially outward at constant speed for fixed amount of steps, then disspears.
+Shrapnel movement is not real physics-based, it moves radially outward at constant speed for fixed amount of steps, then disspears.
 
 Action order:
 Shrapnels spawn in core → move radially outward → disappear → soil is removed where shrapnel was present.
 
-Solid interaction rules:
-Shrapnels cannot overlap tank body, base, or rock.
-Pixel interaction order applies only within materials: Soil → Fire → Hollow space (black).
-Pixels belonging to tank, base, or rock cannot be turned into fire.
+Interaction with other materials:
+Pixels of solid objects (tank body, base, rock) cannot be turned into fire pixels.
+Transition order: Hollow/Soil → Fire → Hollow space (black).
 
 
 ## Bullet
+Bullet's leading pixel is equal to the pixel directly in front of the tip of the barrel so the very tip of the barrel is the bullet's tail pixel.
 
 ### Physics
 Can't bounce off objects, can only do explosion on impact.
 Can't explode on collision with other player's bullet. Each other's bullets can overlap and continue in the same direction.
 
-### Firing
+### Firing Logic
 Analoguous to a toilet flusher mechanism.
 Inflow rate is proportional to tank energy.
 Fire key held down means the toilet is flushed whenever full.
@@ -264,7 +263,13 @@ No bullets fire again until reservoir is fully refilled.
 Once full, flushing resumes at the same constant cadence but stops early due to low energy.
 
 Fire key behavior:
-Pressed once: single bullet.
-Held: equivalent to repeated presses at constant cadence.
+Pressed once: single bullet
+Held: equivalent to repeated presses at constant cadence
 
+## Tank
+When about to explode, it dissapears so the explosion particle effect can be fully visible.
 
+Collisions - pixel perfect:
+It should be able to stuck the wall of the base in between the barrel and wheels so the player must move the tank backward to free it.
+It should be possible to move exactly next to the wall of the base and peel off the soil exactly next to the wall (no gap).
+Other tank is an obstacle, it can't move through it.

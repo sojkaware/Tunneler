@@ -5,6 +5,7 @@ To code a pixel-perfect remake of the original Tuneller game.
 The game must be runnable from a statically hosted site, for example from Github pages.
 Use HTML5 Canvas for rendering, index.html, script.js and style.css should be enough.
 Lets use WSAD instead of WXAD and use SHIFT as Fire since it does not messup with Chrome shortcuts.
+Random generator must be truly random to avoid repeated pseudorandom patterns.
 
 ## Non-Gameplay Screens In The Remake
 The UI or menu is not descibed but you can examine the `round.png` image to get an idea of the look.
