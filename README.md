@@ -20,7 +20,7 @@ I spent about three hours immersed in the original, capturing screenshots and cr
 
 First thing I wanted was to master the world generation logic. Antigravity launched the demo and tried to manipulate it interactively by taking screenshots of the browser. It didn't work. I pivot — I asked it to generate a wall of sliders so I could tune the world generation parameters manually. 1.5 hours of fiddling finally yielded plausible maps, resembling the original. The interference effect was smoother; Gemini ported the Python logic to JS with zero changes needed. 
 
-After approx 4 hours of fiddling I had a working game, added 'end round' and 'game over' screens that are not pixel-perfect, but pleasing.
+After approx 4 hours of fiddling I had a working game. After that, I added non-gameplay info screens which are not like the original, but pleasing.
 
 The coding part only took a Sunday evening, but the thinking behind it was the real work. I can't really claim it as a 'one-day project'.
 
@@ -42,7 +42,7 @@ The coding part only took a Sunday evening, but the thinking behind it was the r
 
 These are the core assets provided to the AI at the beginning of the "vibecoding" session:
 
-*   **Specifications**: [tuneller_specs.md](tuneller_specs.md) — The detailed logic and pixel layouts. 
+*   **Specifications**: [tunneler_specs.md](tunneler_specs.md) — The detailed logic and pixel layouts. 
 *   **Project Goal**: [webapp_remake_goal.md](webapp_remake_goal.md) — The technical requirements and UI plan.
 *   **Reference Images**: [gameplay_screenshot_pixel_perfect.png](gameplay_screenshot_pixel_perfect.png), [round.png](round.png).
 *   **Concept Proofs**: [world_rock_preview.png](world_rock_preview.png), [dropout_effect.md](dropout_effect.md).
