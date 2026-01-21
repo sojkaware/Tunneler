@@ -128,7 +128,9 @@ const STATE = {
     bullets: [],
     particles: [],
     frameCounter: 0,
-    overlayStartTime: 0
+    overlayStartTime: 0,
+    isIntro: true,
+    introStartTime: 0
 };
 
 // CELL TYPES
@@ -219,6 +221,7 @@ function updateGameScale() {
     document.documentElement.style.setProperty('--game-scale', scale);
 }
 document.addEventListener('DOMContentLoaded', () => {
+    STATE.introStartTime = Date.now();
     initUI();
     initSprites();
     initNoiseROM();
@@ -240,8 +243,15 @@ document.addEventListener('DOMContentLoaded', () => {
 function handleGlobalInput(code) {
     const now = Date.now();
     const canContinue = (now - STATE.overlayStartTime >= CONFIG.UI.OVERLAY_MIN_TIME);
+    const canContinueIntro = (now - STATE.introStartTime >= CONFIG.UI.OVERLAY_MIN_TIME);
 
-    if (STATE.isGameOver) {
+    if (STATE.isIntro) {
+        if (canContinueIntro) {
+            STATE.isIntro = false;
+            STATE.introStartTime = 0;
+            // Game is already setup, just start rendering it
+        }
+    } else if (STATE.isGameOver) {
         if (canContinue) {
             // "Press any key to play again"
             resetEntireGame();
@@ -264,6 +274,7 @@ function resetEntireGame() {
     STATE.round = 1;
     STATE.isGameOver = false;
     STATE.winner = null;
+    STATE.isIntro = false; // Ensure we don't show intro again
     setupGame();
 }
 
@@ -635,8 +646,13 @@ function gameLoop(time) {
         updateExplosions();
         updateViewPositions();
         updateRoundFlow();
-        if (!STATE.isGameOver) render();
-        else renderGameOver();
+        if (STATE.isIntro) {
+            renderIntro();
+        } else if (!STATE.isGameOver) {
+            render();
+        } else {
+            renderGameOver();
+        }
     }
     requestAnimationFrame(gameLoop);
 }
@@ -795,6 +811,92 @@ function checkIsDigging(px, py, dx, dy) {
     const y = Math.floor(py + dy * (SPEEDS.TANK_SIZE / 2 + 1));
     const cell = STATE.world[y * w + x];
     return cell === CELLS.SOIL_A || cell === CELLS.SOIL_B;
+}
+
+function renderIntro() {
+    const overlay = document.getElementById('overlay-canvas');
+    if (overlay) {
+        overlay.style.display = 'block';
+        const ctx = overlay.getContext('2d');
+        ctx.fillStyle = CONFIG.COLORS.BLACK;
+        ctx.fillRect(0, 0, overlay.width, overlay.height);
+
+        const cx = Math.floor(overlay.width / 2);
+        const cy = Math.floor(overlay.height / 2);
+        const lineHeight = 10;
+
+        // Helper for rainbow colors (flickering/cycling)
+        const getRainbowColor = (idx) => {
+            const colors = CONFIG.UI.RAINBOW_COLORS;
+            // Cycle based on frame and index to create wave/flicker
+            const colorIdx = (STATE.frameCounter + idx * 3) % colors.length;
+            return colors[colorIdx];
+        };
+
+        const drawCenteredFunc = (text, y, colorOrFunc) => {
+            const textWidth = text.length * 8;
+            const startX = Math.floor(cx - textWidth / 2);
+            if (typeof colorOrFunc === 'function') {
+                for (let i = 0; i < text.length; i++) {
+                    drawBitmapText(ctx, text[i], startX + i * 8, y, colorOrFunc(i));
+                }
+            } else {
+                drawBitmapText(ctx, text, startX, y, colorOrFunc);
+            }
+        };
+
+        // Layout
+        // CONTROLS (Top)
+        // MOVEMENT:
+        // WSAD | ARROWS
+        // FIRE:
+        // SHIFT | SHIFT
+
+        const startY = cy - 30; // Adjust vertical centering
+
+        // CONTROLS
+        drawCenteredFunc('CONTROLS', startY, getRainbowColor);
+
+        // MOVEMENT:
+        drawCenteredFunc('MOVEMENT:', startY + 20, '#ff00ff');
+
+        // WSAD | ARROWS
+        const movLineY = startY + 30;
+        const movText = 'WSAD | ARROWS';
+        const movWidth = movText.length * 8;
+        const movStartX = Math.floor(cx - movWidth / 2);
+
+        // WSAD (Blue)
+        drawBitmapText(ctx, 'WSAD', movStartX, movLineY, STATE.players[0].color);
+        // | (White)
+        drawBitmapText(ctx, '|', movStartX + 4 * 8, movLineY, '#FFFFFF'); // 4 chars: "WSAD"
+        // ARROWS (Green) - " | " is 3 chars, so "WSAD" is 4, " | " is 3. 4+3=7. 
+        // Wait, "WSAD" is 4. " | " is 3? No, " | ". " " "|" " ".
+        // text: "WSAD | ARROWS"
+        // indices: 0123456789012
+        // WSAD: 0-3
+        //  | : 4-6
+        // ARROWS: 7-12
+        drawBitmapText(ctx, '|', movStartX + 5 * 8, movLineY, '#FFFFFF'); // Just the pipe at index 5
+        drawBitmapText(ctx, 'ARROWS', movStartX + 7 * 8, movLineY, STATE.players[1].color);
+
+
+        // FIRE:
+        drawCenteredFunc('FIRE:', startY + 50, '#ff00ff');
+
+        // SHIFT | SHIFT
+        const fireLineY = startY + 60;
+        const fireText = 'SHIFT | SHIFT';
+        const fireWidth = fireText.length * 8;
+        const fireStartX = Math.floor(cx - fireWidth / 2);
+
+        // SHIFT (Left - Blue)
+        drawBitmapText(ctx, 'SHIFT', fireStartX, fireLineY, STATE.players[0].color);
+        // | (White)
+        drawBitmapText(ctx, '|', fireStartX + 6 * 8, fireLineY, '#FFFFFF'); // "SHIFT" is 5, " | " is 3. Pipe is at 6 (5+1).
+        // SHIFT (Right - Green)
+        drawBitmapText(ctx, 'SHIFT', fireStartX + 8 * 8, fireLineY, STATE.players[1].color);
+    }
 }
 
 function digSoil(px, py, dx, dy) {

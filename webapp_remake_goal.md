@@ -9,7 +9,7 @@ Random generator must be truly random to avoid repeated pseudorandom patterns.
 
 ## Non-Gameplay Screens In The Remake
 The UI or menu is not descibed but you can examine the `round.png` image to get an idea of the look.
-I think its this font: IBM PC BIOS 8x8 Font, Code Page 437 (CP437)(CGA and EGA adapters) "VGA 8x8" or "DOS Font".
+I think its this font: IBM PC BIOS 8x8 Font, Code Page 437 (CP437)(CGA and EGA adapters) "VGA 8x8" or "DOS Font". All text must be concistent with vibrant colors of the original game, no ClearType or font smoothing, pure digital solid look.e
 
 Initially, there should be no extra screen, just jump straight into the game.
 
@@ -24,6 +24,20 @@ Go to the next round only if the player responds by any key press, but let the s
 
 ### Game Over Screen
 After the game, show who won and display: "Press any key to play again".
+Start the new game only if player responds, also keep it minimum 3 seconds visible.
+
+### Initial Show Controls Screen
+Initially, show:
+Make `CONTROLS` centered on top of the screen, and this under it:
+```
+MOVEMENT: 
+WSAD | ARROWS
+FIRE:
+SHIFT | SHIFT
+```
+Preserve left/right player's colors.
+`CONTROLS`will be the same as `ROUND X` colors.
+`MOVEMENT`, `FIRE` will be solid, non flickering pink color.
 Start the new game only if player responds, also keep it minimum 3 seconds visible.
 
 ## Important Rules For AI

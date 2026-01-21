@@ -22,11 +22,15 @@ First thing I wanted was to master the world generation logic. Antigravity launc
 
 After approx 4 hours of fiddling I had a working game, added 'end round' and 'game over' screens that are not pixel-perfect, but pleasing.
 
+The coding part only took a Sunday evening, but the thinking behind it was the real work. I can't really claim it as a 'one-day project'.
+
 ### Pain-points
 - Orientation of the tank sprites was wrong initially, Gemini struggled to generalize rotations of my hardcoded sprites.
+- The positioning of itemsin Status Panels was messy. I realized I actually had a mistake in specs that allowed for missinterpretation of margins because of 3D effect. The LLM thought the 3D effect is something on top of the panel and not within it. I fixed it and Gemini got it.
 - Camera movement was not smooth but wiggly, Gemini struggled to understand the tank must be stationary in the center of the screen and the world moves around it.
 - I had to guide it to implement collision detection correctly.
 - The explosions animations needed tuning to match closely the original, but that was expected.
+- Gemini struggled to make Non-Gameply Screens visually consistent with the gameplay, mainly fonts.
 
 ### Known Issues
 - The tip of the barrel and the wheels on the edges wrongly overlap with the base.
